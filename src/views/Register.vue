@@ -11,13 +11,13 @@
             <n-input v-model:value="form.credential" type="password" @keydown.enter.prevent placeholder="请输入密码" />
         </n-form-item>
         <n-space>
-            <n-button strong tertiary type="primary" @click="handleLogin">
-                登录
+            <n-button strong tertiary type="primary" @click="handleRegister">
+                创建账号
             </n-button>
             <div>
-                还没有账号？👉
-                <n-button strong secondary type="primary" @click="switchToRegisterPage">
-                    创建账号
+                已有账号？👉
+                <n-button strong secondary type="primary" @click="switchToLoginPage">
+                    登录
                 </n-button>
             </div>
         </n-space>
@@ -27,19 +27,17 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/store/user'
 import axios from '@/utils/httpUtil'
-import { setLocalStorage } from '@/utils/localStorage'
-import type { LoginInputDto, LoginOutputDto } from '@/models/accounts/loginModel'
+import type { RegisterInputDto, RegisterOutputDto } from '@/models/accounts/registerModel'
 import { identityTypeEnum } from '@/models//accounts/identityTypeEnum'
 
 const router = useRouter()
-const userStore = useUserStore()
 
-const form = ref<LoginInputDto>({
+const form = ref<RegisterInputDto>({
     identityType: identityTypeEnum.phoneNumber,
     identifier: '',
-    credential: ''
+    credential: '',
+    nickName: '',
 })
 
 const identifierPlaceholder = ref('请输入手机号')
@@ -74,28 +72,29 @@ const handleUpdateIdentityType = (value: number) => {
 }
 
 /**
- * 登录
+ * 注册
  */
-const handleLogin = async () => {
+const handleRegister = async () => {
     const params = form.value
-    const result = await axios.post<LoginOutputDto>('/account/login', params)
-    if (result && result.accessToken) {
-        setLocalStorage('accessToken', result.accessToken)
-        userStore.setLogState(true)
-        userStore.setUserInfo({
-            identityType: result.identityType,
-            identifier: result.identifier,
-            userName: result.userName,
-            nickName: result.nickName,
-            avatar: result.avatar
+    const result = await axios.post<RegisterOutputDto>('/account/register', params)
+    if (result && result.userName) {
+        console.log({ result })
+        window.$dialog.success({
+            title: '注册成功',
+            content: '是否前往登录页面？',
+            positiveText: '好的',
+            onPositiveClick: () => {
+                router.push({
+                    name: 'Login'
+                })
+            }
         })
-        router.replace('/')
     }
 }
 
-const switchToRegisterPage = () => {
+const switchToLoginPage = () => {
     router.push({
-        name: 'Register'
+        name: 'Login'
     })
 }
 </script>

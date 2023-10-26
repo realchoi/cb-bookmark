@@ -6,7 +6,6 @@ export const useUserStore = defineStore({
     id: 'user',
     state: () => {
         return {
-            name: '张三',
             /**是否已登录（true-已登录，false-未登录） */
             logState: false,
             /**用户资料信息 */
@@ -14,9 +13,6 @@ export const useUserStore = defineStore({
         }
     },
     actions: {
-        updateName(name: string) {
-            this.name = name
-        },
         /**
          * 设置登录状态
          * @param state 登录状态（true-已登录，false-未登录）

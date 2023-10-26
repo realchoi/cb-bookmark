@@ -4,9 +4,11 @@ import useMessage from '@/components/UseMessage.vue'
 </script>
 
 <template>
-  <n-message-provider>
-    <useMessage />
-  </n-message-provider>
+  <n-dialog-provider>
+    <n-message-provider>
+      <useMessage />
+    </n-message-provider>
+  </n-dialog-provider>
 
   <!-- <UsePiniaDemo /> -->
   <RouterView />

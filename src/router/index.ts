@@ -20,6 +20,16 @@ const routes: Array<RouteRecordRaw> = [
             requireAuth: false
         },
         component: () => import('@/views/Login.vue')
+    },
+    {
+        path: '/register',
+        name: 'Register',
+        meta: {
+            title: '注册',
+            keepAlive: true,
+            requireAuth: false
+        },
+        component: () => import('@/views/Register.vue')
     }
 ]
 
