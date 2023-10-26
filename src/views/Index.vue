@@ -1,9 +1,8 @@
 <template>
-    <h2>首页</h2>
     <div>
-        <h4>用户信息：</h4>{{ userStore.userInfo.userName ? userStore.userInfo.userName : '无' }}，<h4>是否已登录：</h4>{{
+        <h2>用户信息：</h2>{{ userStore.userInfo.userName ? userStore.userInfo.userName : '无' }}，<h2>是否已登录：</h2>{{
             userStore.logState ? '是' : '否' }}
-        <n-button strong tertiary type="primary" @click="handleLogout">
+        <n-button strong tertiary type="primary" @click="handleLogout" v-if="userStore.logState">
             登出
         </n-button>
     </div>

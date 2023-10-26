@@ -4,7 +4,7 @@
         <div class="flex w-67.5px h-45px py-4">
             <a class="flex items-center justify-center cursor-pointer w-full h-full" @click="gotoPath('/')">
                 <div class="w-full h-full"
-                    style="background-size: 67.5px 45px; background-image: url(https://s3.bmp.ovh/imgs/2022/10/15/880c81a593e45d0f.png);">
+                    style="background-size: 67.5px 45px; background-image: url(https://s3.bmp.ovh/imgs/2023/10/26/15b0f012af94d69b.png);">
                 </div>
             </a>
         </div>
@@ -33,7 +33,7 @@
                     </button>
                 </div>
                 <n-dropdown trigger="hover" :options="dropdownMenuOptions" v-else>
-                    <n-button quaternary type="primary">{{ userStore.userInfo.userName }}</n-button>
+                    <n-button quaternary type="primary">用户：{{ userStore.userInfo.userName }}</n-button>
                 </n-dropdown>
             </div>
             <!-- 用户信息菜单 end -->
@@ -64,7 +64,6 @@ const dropdownMenuOptions = [{
     disabled: false,
     props: {
         onClick: () => {
-            window.$message.success('我的主页!')
             gotoPath('/member')
         }
     }
@@ -74,7 +73,7 @@ const dropdownMenuOptions = [{
     disabled: false,
     props: {
         onClick: () => {
-            window.$message.success('退出登录!')
+            window.$message.success('退出登录成功！')
             logout()
         }
     }
