@@ -1,10 +1,11 @@
 import { createApp } from 'vue'
-import './style.css'
 import App from './App.vue'
 import store from './store'
 import router from './router'
 // import { NMessageProvider } from "naive-ui"
 
+// 引入初始化样式
+import "@/assets/css/normalize.css"
 // 导入 Unocss 样式 
 import 'uno.css'
 

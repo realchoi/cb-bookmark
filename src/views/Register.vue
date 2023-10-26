@@ -1,27 +1,29 @@
 <template>
-    <n-form ref="formRef" :model="form" size="medium" label-placement="left">
-        <n-form-item label="账号">
-            <n-input-group>
-                <n-select :style="{ width: '150px' }" v-model:value="form.identityType" :options="identityTypeOptions"
-                    @update:value="handleUpdateIdentityType" />
-                <n-input v-model:value="form.identifier" @keydown.enter.prevent :placeholder="identifierPlaceholder" />
-            </n-input-group>
-        </n-form-item>
-        <n-form-item label="密码">
-            <n-input v-model:value="form.credential" type="password" @keydown.enter.prevent placeholder="请输入密码" />
-        </n-form-item>
-        <n-space>
-            <n-button strong tertiary type="primary" @click="handleRegister">
-                创建账号
-            </n-button>
-            <div>
-                已有账号？👉
-                <n-button strong secondary type="primary" @click="switchToLoginPage">
-                    登录
+    <div class="flex w-full items-center justify-center">
+        <n-form ref="formRef" :model="form" size="medium" label-placement="left">
+            <n-form-item label="账号">
+                <n-input-group>
+                    <n-select :style="{ width: '150px' }" v-model:value="form.identityType" :options="identityTypeOptions"
+                        @update:value="handleUpdateIdentityType" />
+                    <n-input v-model:value="form.identifier" @keydown.enter.prevent :placeholder="identifierPlaceholder" />
+                </n-input-group>
+            </n-form-item>
+            <n-form-item label="密码">
+                <n-input v-model:value="form.credential" type="password" @keydown.enter.prevent placeholder="请输入密码" />
+            </n-form-item>
+            <n-space>
+                <n-button strong tertiary type="primary" @click="handleRegister">
+                    创建账号
                 </n-button>
-            </div>
-        </n-space>
-    </n-form>
+                <div>
+                    已有账号？👉
+                    <n-button strong secondary type="primary" @click="switchToLoginPage">
+                        登录
+                    </n-button>
+                </div>
+            </n-space>
+        </n-form>
+    </div>
 </template>
 
 <script lang="ts" setup>
