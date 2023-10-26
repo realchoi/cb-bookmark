@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // import UsePiniaDemo from './components/UsePiniaDemo.vue'
 import useMessage from '@/components/UseMessage.vue'
+import CommonLayout from "./components/layout/CommonLayout.vue"
 </script>
 
 <template>
@@ -11,7 +12,8 @@ import useMessage from '@/components/UseMessage.vue'
   </n-dialog-provider>
 
   <!-- <UsePiniaDemo /> -->
-  <RouterView />
+  <!-- <RouterView /> -->
+  <CommonLayout></CommonLayout>
 </template>
 
 <style scoped></style>

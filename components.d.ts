@@ -7,9 +7,14 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    CommonContent: typeof import('./src/components/layout/CommonContent.vue')['default']
+    CommonFooter: typeof import('./src/components/layout/CommonFooter.vue')['default']
+    CommonHeader: typeof import('./src/components/layout/CommonHeader.vue')['default']
+    CommonLayout: typeof import('./src/components/layout/CommonLayout.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     NButton: typeof import('naive-ui')['NButton']
     NDialogProvider: typeof import('naive-ui')['NDialogProvider']
+    NDropdown: typeof import('naive-ui')['NDropdown']
     NForm: typeof import('naive-ui')['NForm']
     NFormItem: typeof import('naive-ui')['NFormItem']
     NInput: typeof import('naive-ui')['NInput']
