@@ -1,6 +1,9 @@
 <template>
     <div class="flex w-full items-center justify-center">
         <n-form ref="formRef" :model="form" size="medium" label-placement="left">
+            <n-form-item label="昵称">
+                <n-input v-model:value="form.nickName" @keydown.enter.prevent placeholder="请输入昵称" />
+            </n-form-item>
             <n-form-item label="账号">
                 <n-input-group>
                     <n-select :style="{ width: '150px' }" v-model:value="form.identityType" :options="identityTypeOptions"
