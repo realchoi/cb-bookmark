@@ -24,7 +24,7 @@
             <!-- 功能菜单 end -->
             <!-- 用户信息菜单 start -->
             <div class="flex ml-auto">
-                <div class="flex" v-if="!userStore.logState">
+                <div class="flex" v-if="!userStore.loginStatus">
                     <button class="btn btn-login" @click="gotoPath('/login')">
                         登录
                     </button>
@@ -115,7 +115,7 @@ const closeMobileMenu = () => {
  */
 const logout = () => {
     removeLocalStorage('accessToken')
-    userStore.setLogState(false)
+    userStore.setLoginStatus(false)
     userStore.setUserInfo({} as UserInfoDto)
     router.replace('/')
 }

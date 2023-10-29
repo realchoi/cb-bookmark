@@ -83,7 +83,7 @@ const handleLogin = async () => {
     const result = await axios.post<LoginOutputDto>('/account/login', params)
     if (result && result.accessToken) {
         setLocalStorage('accessToken', result.accessToken)
-        userStore.setLogState(true)
+        userStore.setLoginStatus(true)
         userStore.setUserInfo({
             identityType: result.identityType,
             identifier: result.identifier,

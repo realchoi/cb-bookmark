@@ -1,8 +1,8 @@
 <template>
     <div>
         <h2>用户信息：</h2>{{ userStore.userInfo.userName ? userStore.userInfo.userName : '无' }}，<h2>是否已登录：</h2>{{
-            userStore.logState ? '是' : '否' }}
-        <n-button strong tertiary type="primary" @click="handleLogout" v-if="userStore.logState">
+            userStore.loginStatus ? '是' : '否' }}
+        <n-button strong tertiary type="primary" @click="handleLogout" v-if="userStore.loginStatus">
             登出
         </n-button>
     </div>
@@ -17,7 +17,7 @@ const userStore = useUserStore()
 
 const handleLogout = () => {
     removeLocalStorage('accessToken')
-    userStore.setLogState(false)
+    userStore.setLoginStatus(false)
     userStore.setUserInfo({} as UserInfoDto)
     // router.replace('/')
 }

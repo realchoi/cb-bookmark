@@ -7,7 +7,7 @@ export const useUserStore = defineStore({
     state: () => {
         return {
             /**是否已登录（true-已登录，false-未登录） */
-            logState: false,
+            loginStatus: false,
             /**用户资料信息 */
             userInfo: {} as UserInfoDto
         }
@@ -15,10 +15,10 @@ export const useUserStore = defineStore({
     actions: {
         /**
          * 设置登录状态
-         * @param state 登录状态（true-已登录，false-未登录）
+         * @param status 登录状态（true-已登录，false-未登录）
          */
-        setLogState(state: boolean) {
-            this.logState = state
+        setLoginStatus(status: boolean) {
+            this.loginStatus = status
         },
 
         /**

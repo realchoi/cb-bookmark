@@ -121,7 +121,7 @@ class RequestHttp {
                             // 登录信息失效，应跳转到登录页面，并清空本地的 token
                             removeLocalStorage('accessToken')
                             const userStore = useUserStore()
-                            userStore.setLogState(false)
+                            userStore.setLoginStatus(false)
                             userStore.setUserInfo({} as UserInfoDto)
                             router.replace({
                                 path: 'login'
