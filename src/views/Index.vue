@@ -1,24 +1,49 @@
 <template>
-    <div>
-        <h2>用户信息：</h2>{{ userStore.userInfo.userName ? userStore.userInfo.userName : '无' }}，<h2>是否已登录：</h2>{{
-            userStore.loginStatus ? '是' : '否' }}
-        <n-button strong tertiary type="primary" @click="handleLogout" v-if="userStore.loginStatus">
-            登出
-        </n-button>
+    <div class="flex items-center w-full h-full">
+        <div class="w-xs h-full">
+            <BookmarkTree />
+        </div>
+        <div class="flex flex-1 h-full ml flex-justify-center items-center">
+            <div class="w-80% h-90% pt-24px pb-24px"
+                style="background-color: white; border-radius: 8px; box-shadow: color-mix(in srgb, rgb( 60,64,67 ) 30%, transparent) 0 1px 2px 0, color-mix(in srgb, rgb( 60,64,67 ) 15%, transparent) 0 2px 6px 2px; overflow-y: auto;">
+                <BookmarkItem :bookmark="bookmark" :key="bookmark.url" v-for="bookmark in bookmarks"></BookmarkItem>
+            </div>
+        </div>
     </div>
 </template>
 
 <script lang="ts" setup>
-import { useUserStore } from '@/store/user'
-import { removeLocalStorage } from '@/utils/localStorage'
-import type { UserInfoDto } from '@/models/accounts/userModel'
+import BookmarkTree from '@/components/BookmarkTree.vue'
+import BookmarkItem from '@/components/BookmarkItem.vue';
 
-const userStore = useUserStore()
-
-const handleLogout = () => {
-    removeLocalStorage('accessToken')
-    userStore.setLoginStatus(false)
-    userStore.setUserInfo({} as UserInfoDto)
-    // router.replace('/')
-}
+const bookmarks = [
+    {
+        name: "Choi's Notes",
+        url: "https://smc.im"
+    },
+    {
+        name: "百度一下，你就知道",
+        url: "https://www.baidu.com"
+    },
+    {
+        name: "Google",
+        url: "https://www.google.com"
+    },
+    {
+        name: "V2EX",
+        url: "https://www.v2ex.com"
+    },
+    {
+        name: "X。尽是新鲜事 / X",
+        url: "https://twitter.com"
+    },
+    {
+        name: "YouTube",
+        url: "https://youtube.com"
+    },
+    {
+        name: "UnoCSS",
+        url: "https://unocss.dev"
+    }
+]
 </script>
