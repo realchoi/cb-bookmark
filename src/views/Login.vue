@@ -85,6 +85,7 @@ const handleLogin = async () => {
         setLocalStorage('accessToken', result.accessToken)
         userStore.setLoginStatus(true)
         userStore.setUserInfo({
+            id: result.id,
             identityType: result.identityType,
             identifier: result.identifier,
             userName: result.userName,

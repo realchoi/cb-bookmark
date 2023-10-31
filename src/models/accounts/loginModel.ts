@@ -16,6 +16,8 @@ export interface LoginInputDto {
  * 登录出参
  */
 export interface LoginOutputDto {
+    /**用户 Id，关联 user_info 表的主键 */
+    id: string,
     /**登录类型 */
     identityType: identityTypeEnum,
     /**标识（手机号、邮箱、用户名或第三方应用的唯一标识） */

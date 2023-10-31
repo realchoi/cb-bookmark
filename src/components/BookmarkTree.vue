@@ -1,16 +1,75 @@
 <template>
-    <n-tree block-line expand-on-click :data="data" :node-props="nodeProps"
-        :on-update:expanded-keys="updatePrefixWithExpaned" />
+    <n-tree block-line expand-on-click :data="treeData" :node-props="nodeProps"
+        :on-update:expanded-keys="updatePrefixWithExpaned" key-field="id" label-field="name" />
 </template>
   
 <script lang="ts" setup>
-import { h } from 'vue'
+import { h, ref, onMounted } from 'vue'
 import { NIcon, TreeOption } from 'naive-ui'
 import {
     Folder,
     FolderOpenOutline,
     FileTrayFullOutline
 } from '@vicons/ionicons5'
+import axios from '@/utils/httpUtil'
+import { useUserStore } from '@/store/user'
+import type { FolderTreeDto } from '@/models/folders/folderTreeModel'
+
+const userStore = useUserStore()
+
+const getFolderTree = async () => {
+    if (userStore.loginStatus && userStore.userInfo && userStore.userInfo.id) {
+        const result = await axios.get<FolderTreeDto[]>(`/bookmark/tree?userId=${userStore.userInfo.id}`)
+        if (result) {
+            setTreeItemPrefix(result)
+            treeData.value = result
+        }
+    }
+    else {
+        window.$dialog.error({
+            title: '未登录',
+            content: '请先登录后再使用'
+        })
+    }
+}
+
+onMounted(async () => {
+    await getFolderTree()
+})
+
+const setTreeItemPrefix = (tree: FolderTreeDto[]) => {
+    for (let index = 0; index < tree.length; index++) {
+        let ele = tree[index];
+        ele.prefix = folderPrefix
+        if (ele.children) {
+            setTreeItemPrefix(ele.children);
+        }
+    }
+}
+
+/**
+ * 渲染一个关闭的文件夹图标前缀
+ */
+const folderPrefix = () =>
+    h(NIcon, null, {
+        default: () => h(Folder)
+    })
+
+/**
+ * 渲染一个打开的文件夹图标前缀
+ */
+const folderOpenOutlinePrefix = () =>
+    h(NIcon, null, {
+        default: () => h(FolderOpenOutline)
+    })
+
+/**
+ * 渲染一个文件图标前缀
+ */
+const fileTrayFullOutlinePrefix = () =>
+    h(NIcon, null, {
+        default: () => h(FileTrayFullOutline)
+    })
 
 const updatePrefixWithExpaned = (
     _keys: Array<string | number>,
@@ -23,16 +82,10 @@ const updatePrefixWithExpaned = (
     if (!meta.node) return
     switch (meta.action) {
         case 'expand':
-            meta.node.prefix = () =>
-                h(NIcon, null, {
-                    default: () => h(FolderOpenOutline)
-                })
+            meta.node.prefix = folderOpenOutlinePrefix
             break
         case 'collapse':
-            meta.node.prefix = () =>
-                h(NIcon, null, {
-                    default: () => h(Folder)
-                })
+            meta.node.prefix = folderPrefix
             break
     }
 }
@@ -40,45 +93,35 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     return {
         onClick() {
             if (!option.children && !option.disabled) {
-                window.$message.info('[Click] ' + option.label)
+                window.$message.info('[Click] ' + option.name)
             }
         }
     }
 }
 
+const treeData = ref<FolderTreeDto[]>([])
+
 const data = [
     {
-        key: '文件夹',
-        label: '文件夹',
-        prefix: () =>
-            h(NIcon, null, {
-                default: () => h(Folder)
-            }),
+        id: '书签栏',
+        name: '书签栏',
+        prefix: folderPrefix,
         children: [
             {
-                key: '空的',
-                label: '空的',
+                id: '空的',
+                name: '空的',
                 disabled: true,
-                prefix: () =>
-                    h(NIcon, null, {
-                        default: () => h(Folder)
-                    })
+                prefix: folderPrefix
             },
             {
-                key: '我的文件',
-                label: '我的文件',
-                prefix: () =>
-                    h(NIcon, null, {
-                        default: () => h(Folder)
-                    }),
+                id: '我的文件',
+                name: '我的文件',
+                prefix: folderPrefix,
                 children: [
                     {
-                        label: 'template.txt',
-                        key: 'template.txt',
-                        prefix: () =>
-                            h(NIcon, null, {
-                                default: () => h(FileTrayFullOutline)
-                            })
+                        name: 'template.txt',
+                        id: 'template.txt',
+                        prefix: fileTrayFullOutlinePrefix
                     }
                 ]
             }
