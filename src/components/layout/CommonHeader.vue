@@ -1,10 +1,10 @@
 <template>
     <div class="header">
         <!-- logo 区域 start -->
-        <div class="flex w-67.5px h-45px py-4">
+        <div class="flex w-50px h-45px py-4">
             <a class="flex items-center justify-center cursor-pointer w-full h-full" @click="gotoPath('/')">
                 <div class="w-full h-full"
-                    style="background-size: 67.5px 45px; background-image: url(https://s3.bmp.ovh/imgs/2023/10/26/15b0f012af94d69b.png);">
+                    style="background-size: 50px 45px; background-image: url(https://s3.bmp.ovh/imgs/2023/10/26/15b0f012af94d69b.png);">
                 </div>
             </a>
         </div>

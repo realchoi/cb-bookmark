@@ -1,6 +1,6 @@
 <template>
-    <n-tree block-line expand-on-click :data="treeData" :node-props="nodeProps"
-        :on-update:expanded-keys="updatePrefixWithExpaned" key-field="id" label-field="name" />
+    <n-tree block-line expand-on-click :data="bookmarkCategoryTree" :node-props="nodeProps"
+        :on-update:expanded-keys="updatePrefixWithExpaned" />
 </template>
   
 <script lang="ts" setup>
@@ -9,20 +9,29 @@ import { NIcon, TreeOption } from 'naive-ui'
 import {
     Folder,
     FolderOpenOutline,
-    FileTrayFullOutline
+    // FileTrayFullOutline
 } from '@vicons/ionicons5'
 import axios from '@/utils/httpUtil'
 import { useUserStore } from '@/store/user'
-import type { FolderTreeDto } from '@/models/folders/folderTreeModel'
 
 const userStore = useUserStore()
+/**树的数据 */
+const bookmarkCategoryTree = ref<TreeOption[]>([])
 
-const getFolderTree = async () => {
+// 组建挂载后获取数据
+onMounted(async () => {
+    await getBookmarkCategoryTree()
+})
+
+/**
+ * 调用接口获取书签分类目录树数据
+ */
+const getBookmarkCategoryTree = async () => {
     if (userStore.loginStatus && userStore.userInfo && userStore.userInfo.id) {
-        const result = await axios.get<FolderTreeDto[]>(`/bookmark/tree?userId=${userStore.userInfo.id}`)
+        const result = await axios.get<TreeOption[]>(`/bookmark/category/tree?userId=${userStore.userInfo.id}`)
         if (result) {
             setTreeItemPrefix(result)
-            treeData.value = result
+            bookmarkCategoryTree.value = result
         }
     }
     else {
@@ -33,11 +42,8 @@ const getFolderTree = async () => {
     }
 }
 
-onMounted(async () => {
-    await getFolderTree()
-})
-
-const setTreeItemPrefix = (tree: FolderTreeDto[]) => {
+/**给不同的树节点设置前缀图标 */
+const setTreeItemPrefix = (tree: TreeOption[]) => {
     for (let index = 0; index < tree.length; index++) {
         let ele = tree[index];
         ele.prefix = folderPrefix
@@ -63,14 +69,15 @@ const folderOpenOutlinePrefix = () =>
         default: () => h(FolderOpenOutline)
     })
 
-/**
- * 渲染一个文件图标前缀
- */
-const fileTrayFullOutlinePrefix = () =>
-    h(NIcon, null, {
-        default: () => h(FileTrayFullOutline)
-    })
+// /**
+//  * 渲染一个文件图标前缀
+//  */
+// const fileTrayFullOutlinePrefix = () =>
+//     h(NIcon, null, {
+//         default: () => h(FileTrayFullOutline)
+//     })
 
+/**点击树节点时改变前缀图标样式 */
 const updatePrefixWithExpaned = (
     _keys: Array<string | number>,
     _option: Array<TreeOption | null>,
@@ -89,43 +96,15 @@ const updatePrefixWithExpaned = (
             break
     }
 }
+
+/**树节点属性 */
 const nodeProps = ({ option }: { option: TreeOption }) => {
     return {
         onClick() {
-            if (!option.children && !option.disabled) {
-                window.$message.info('[Click] ' + option.name)
+            if (!option.disabled) {
+                window.$message.info('[Click] ' + option.label)
             }
         }
     }
 }
-
-const treeData = ref<FolderTreeDto[]>([])
-
-const data = [
-    {
-        id: '书签栏',
-        name: '书签栏',
-        prefix: folderPrefix,
-        children: [
-            {
-                id: '空的',
-                name: '空的',
-                disabled: true,
-                prefix: folderPrefix
-            },
-            {
-                id: '我的文件',
-                name: '我的文件',
-                prefix: folderPrefix,
-                children: [
-                    {
-                        name: 'template.txt',
-                        id: 'template.txt',
-                        prefix: fileTrayFullOutlinePrefix
-                    }
-                ]
-            }
-        ]
-    }
-]
 </script>
