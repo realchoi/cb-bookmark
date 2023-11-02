@@ -3,7 +3,7 @@
         <!--书签分类目录树 start-->
         <div class="w-xs h-full">
             <n-tree block-line expand-on-click :data="bookmarkCategoryTree" :node-props="nodeProps"
-                :on-update:expanded-keys="updatePrefixWithExpaned" />
+                :expanded-keys="expandedKeys" :render-switcher-icon="renderSwitcherIcon" />
         </div>
         <!--书签分类目录树 end-->
         <!--书签条目列表 start-->
@@ -23,6 +23,7 @@ import { NIcon, TreeOption } from 'naive-ui'
 import {
     Folder,
     FolderOpenOutline,
+    CaretForward
     // FileTrayFullOutline
 } from '@vicons/ionicons5'
 import BookmarkItem from '@/components/BookmarkItem.vue';
@@ -41,6 +42,8 @@ const bookmarkItems = ref<BookmarkItemDto[]>([])
 onMounted(async () => {
     await getBookmarkCategoryTree()
 })
+
+const expandedKeys = ref<Array<string | number>>([])
 
 /**
  * 调用接口获取书签分类目录树数据
@@ -136,6 +139,26 @@ const updatePrefixWithExpaned = (
             meta.node.prefix = folderPrefix
             break
     }
+}
+
+/**节点展开开关的样式 */
+const renderSwitcherIcon = ({ option, expanded }: { option: TreeOption, expanded: boolean }) => {
+    const { key } = option
+    return h(NIcon, null, {
+        default: () => h(CaretForward, {
+            onClick: (e: PointerEvent) => {
+                if (expanded) {
+                    option.prefix = folderPrefix
+                    expandedKeys.value = expandedKeys.value.filter(item => key !== item)
+                }
+                else {
+                    option.prefix = folderOpenOutlinePrefix
+                    expandedKeys.value.push(key as string)
+                }
+                e.stopPropagation()
+            }
+        })
+    })
 }
 
 /**树节点属性 */
