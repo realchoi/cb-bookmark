@@ -43,7 +43,10 @@ onMounted(async () => {
     await getBookmarkCategoryTree()
 })
 
+/**展开的节点的 key */
 const expandedKeys = ref<Array<string | number>>([])
+/**当前点击的节点的 key */
+const clickedKey = ref<string | number>('')
 
 /**
  * 调用接口获取书签分类目录树数据
@@ -122,24 +125,24 @@ const folderOpenOutlinePrefix = () =>
 //     })
 
 /**点击树节点时改变前缀图标样式 */
-const updatePrefixWithExpaned = (
-    _keys: Array<string | number>,
-    _option: Array<TreeOption | null>,
-    meta: {
-        node: TreeOption | null
-        action: 'expand' | 'collapse' | 'filter'
-    }
-) => {
-    if (!meta.node) return
-    switch (meta.action) {
-        case 'expand':
-            meta.node.prefix = folderOpenOutlinePrefix
-            break
-        case 'collapse':
-            meta.node.prefix = folderPrefix
-            break
-    }
-}
+// const updatePrefixWithExpaned = (
+//     _keys: Array<string | number>,
+//     _option: Array<TreeOption | null>,
+//     meta: {
+//         node: TreeOption | null
+//         action: 'expand' | 'collapse' | 'filter'
+//     }
+// ) => {
+//     if (!meta.node) return
+//     switch (meta.action) {
+//         case 'expand':
+//             meta.node.prefix = folderOpenOutlinePrefix
+//             break
+//         case 'collapse':
+//             meta.node.prefix = folderPrefix
+//             break
+//     }
+// }
 
 /**节点展开开关的样式 */
 const renderSwitcherIcon = ({ option, expanded }: { option: TreeOption, expanded: boolean }) => {
@@ -166,9 +169,12 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     return {
         async onClick() {
             if (!option.disabled) {
-                // 点击某个分类目录时，获取该目录下面的书签条目
-                window.$message.info('[Click] ' + option.label)
-                await getBookmarkItemList(option.key as string)
+                // window.$message.info('[Click] ' + option.label)
+                if (clickedKey.value !== option.key as string) {
+                    clickedKey.value = option.key as string
+                    // 点击切换到某个分类目录时，获取该目录下面的书签条目
+                    await getBookmarkItemList(option.key as string)
+                }
             }
         }
     }
