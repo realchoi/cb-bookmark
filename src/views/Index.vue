@@ -6,7 +6,8 @@
                 :expanded-keys="expandedTreeNodeKeys" :render-switcher-icon="renderSwitcherIcon"
                 :render-suffix="renderSuffix" />
             <n-dropdown trigger="manual" placement="bottom-start" :show="showDropdown" :options="(dropdownOptions as any)"
-                :x="dropdownX" :y="dropdownY" @select="handleSelect" @clickoutside="handleClickoutside" />
+                :x="dropdownX" :y="dropdownY" @select="handleDropdownMenuSelect"
+                @clickoutside="handleDropdownMenuClickoutside" />
         </div>
         <!--书签分类目录树 end-->
         <!--书签条目列表 start-->
@@ -45,7 +46,8 @@
     </n-modal>
     <!--新增书签信息的模态框 end-->
     <!--新增文件夹信息的模态框 start-->
-    <n-modal v-model:show="showAddCategoryModal" :mask-closable="false" preset="card" style="width: 600px;" title="添加新文件夹">
+    <n-modal v-model:show="showAddCategoryModal" :mask-closable="false" preset="card" style="width: 600px;"
+        :title="addCategoryModalTitle">
         <n-form :model="bookmarkCategoryForm" size="medium" label-placement="left">
             <n-form-item label="名称">
                 <n-input v-model:value="bookmarkCategoryForm.name" @keydown.enter.prevent placeholder="请输入名称" />
@@ -82,14 +84,45 @@ import {
 import BookmarkItem from '@/components/BookmarkItem.vue';
 import axios from '@/utils/httpUtil'
 import { useUserStore } from '@/store/user'
+import type { BookmarkCategoryTreeDto } from '@/models/bookmarkCategories/bookmarkCategoryModel'
 import type { GetBookmarkItemListInput, BookmarkItemDto } from '@/models/bookmarkItems/bookmarkItemModel'
 
 const userStore = useUserStore()
 
+// 组建挂载后获取书签分类目录树的数据
+onMounted(async () => {
+    await getBookmarkCategoryTree()
+})
+
+/**展开的树节点的 key */
+const expandedTreeNodeKeys = ref<Array<string | number>>([])
+/**当前选中的树节点 */
+const selectedTreeNode = ref<BookmarkCategoryTreeDto>()
+/**当前右键菜单选中的树节点 */
+const contextMenuSelectedTreeNode = ref<BookmarkCategoryTreeDto>()
+
+/**
+ * 渲染一个关闭的文件夹图标前缀
+ */
+const folderPrefix = () =>
+    h(NIcon, null, {
+        default: () => h(Folder)
+    })
+
+/**
+ * 渲染一个打开的文件夹图标前缀
+ */
+const folderOpenOutlinePrefix = () =>
+    h(NIcon, null, {
+        default: () => h(FolderOpenOutline)
+    })
+
 /**书签分类目录树的数据 */
-const bookmarkCategoryTree = ref<TreeOption[]>([{
+const bookmarkCategoryTree = ref<BookmarkCategoryTreeDto[]>([{
     key: '0',
-    label: '书签栏'
+    label: '书签栏',
+    prefix: folderPrefix,
+    parentId: null
 }])
 /**书签条目的数据 */
 const bookmarkItems = ref<BookmarkItemDto[]>([])
@@ -115,16 +148,23 @@ const dropdownOptions = ref<DropdownOption[]>([
         key: 'delete'
     }
 ])
+/**右键菜单所在位置的 X 坐标 */
 const dropdownX = ref(0)
+/**右键菜单所在位置的 Y 坐标 */
 const dropdownY = ref(0)
 
 /**展示新增书签条目的弹窗 */
 const showAddItemModal = ref(false)
 /**展示新增分类目录的弹窗 */
 const showAddCategoryModal = ref(false)
+/**分类条目表单所在的模态框的名称 */
+const addCategoryModalTitle = ref('添加新文件夹')
+/**标记当前是新增目录，还是编辑目录 */
+let addOrUpdateCategory: 'add' | 'update' = 'add'
 
-const handleSelect = (key: string | number) => {
-    window.$message.info(String(key) + ': ' + contextMenuClickedTreeNodeKey.value)
+/**右键菜单选中事件 */
+const handleDropdownMenuSelect = (key: string | number) => {
+    window.$message.info(String(key) + ': ' + contextMenuSelectedTreeNode.value?.key)
     showDropdown.value = false
     switch (key) {
         case 'add-item':
@@ -138,9 +178,24 @@ const handleSelect = (key: string | number) => {
             }
             break
         case 'add-category':
+            addOrUpdateCategory = 'add'
+            addCategoryModalTitle.value = '添加新文件夹'
             // 清空之前的表单
             bookmarkCategoryForm.value = {
+                id: '',
                 name: '',
+                parentId: '',
+                userId: ''
+            }
+            showAddCategoryModal.value = true
+            break
+        case 'rename':
+            addOrUpdateCategory = 'update'
+            addCategoryModalTitle.value = '重命名'
+            // 清空之前的表单
+            bookmarkCategoryForm.value = {
+                id: contextMenuSelectedTreeNode.value?.key as string,
+                name: contextMenuSelectedTreeNode.value?.label as string,
                 parentId: '',
                 userId: ''
             }
@@ -148,7 +203,9 @@ const handleSelect = (key: string | number) => {
             break
     }
 }
-const handleClickoutside = () => {
+
+/**右键菜单未选中事件 */
+const handleDropdownMenuClickoutside = () => {
     showDropdown.value = false
 }
 
@@ -161,7 +218,8 @@ const bookmarkItemForm = ref<{ name: string, url: string, categoryId: string, us
 })
 
 /**新增分类目录的表单 */
-const bookmarkCategoryForm = ref<{ name: string, parentId: string, userId: string }>({
+const bookmarkCategoryForm = ref<{ id: string, name: string, parentId: string | undefined | null, userId: string }>({
+    id: '',
     name: '',
     parentId: '',
     userId: ''
@@ -172,11 +230,11 @@ const bookmarkCategoryForm = ref<{ name: string, parentId: string, userId: strin
  */
 const saveBookmarkItem = async () => {
     bookmarkItemForm.value.userId = userStore.userInfo.id
-    bookmarkItemForm.value.categoryId = contextMenuClickedTreeNodeKey.value as string
+    bookmarkItemForm.value.categoryId = contextMenuSelectedTreeNode.value?.key as string
     const result = await axios.post<string>('/bookmark/item', bookmarkItemForm.value)
     if (result) {
         window.$message.success('保存成功')
-        await getBookmarkItemList(selectedTreeNodeKey.value as string)
+        await getBookmarkItemList(selectedTreeNode.value?.key as string)
     }
     else {
         window.$message.error('可能发生了一点错误...')
@@ -189,12 +247,15 @@ const saveBookmarkItem = async () => {
  */
 const saveBookmarkCategory = async () => {
     bookmarkCategoryForm.value.userId = userStore.userInfo.id
-    bookmarkCategoryForm.value.parentId = contextMenuClickedTreeNodeKey.value as string
+    // 如果是在当前节点新增子文件夹，则父级 id 就是当前右键菜单选中的节点的 id
+    // 如果是对当前右键菜单选中的节点进行重命名，则父级 id 则是上一级的 id
+    bookmarkCategoryForm.value.parentId = addOrUpdateCategory === 'add'
+        ? contextMenuSelectedTreeNode.value?.key as string
+        : contextMenuSelectedTreeNode.value?.parentId
     const result = await axios.post<string>('/bookmark/category', bookmarkCategoryForm.value)
     if (result) {
         window.$message.success('保存成功')
         await getBookmarkCategoryTree()
-        // await getBookmarkItemList(selectedTreeNodeKey.value as string)
     }
     else {
         window.$message.error('可能发生了一点错误...')
@@ -202,24 +263,12 @@ const saveBookmarkCategory = async () => {
     showAddCategoryModal.value = false
 }
 
-// 组建挂载后获取书签分类目录树的数据
-onMounted(async () => {
-    await getBookmarkCategoryTree()
-})
-
-/**展开的树节点的 key */
-const expandedTreeNodeKeys = ref<Array<string | number>>([])
-/**当前选中的树节点的 key */
-const selectedTreeNodeKey = ref<string | number>('')
-/**树节点右键菜单点击的节点的 key */
-const contextMenuClickedTreeNodeKey = ref<string | number>('')
-
 /**
  * 调用接口获取书签分类目录树数据
  */
 const getBookmarkCategoryTree = async () => {
     if (userStore.loginStatus && userStore.userInfo && userStore.userInfo.id) {
-        const result = await axios.get<TreeOption[]>(`/bookmark/category/tree?userId=${userStore.userInfo.id}`)
+        const result = await axios.get<BookmarkCategoryTreeDto[]>(`/bookmark/category/tree?userId=${userStore.userInfo.id}`)
         if (result) {
             setTreeItemPrefix(result)
             bookmarkCategoryTree.value = result
@@ -256,7 +305,7 @@ const getBookmarkItemList = async (categoryId: string) => {
 }
 
 /**给不同的树节点设置前缀图标 */
-const setTreeItemPrefix = (tree: TreeOption[]) => {
+const setTreeItemPrefix = (tree: BookmarkCategoryTreeDto[]) => {
     for (let index = 0; index < tree.length; index++) {
         let ele = tree[index];
         ele.prefix = folderPrefix
@@ -268,63 +317,19 @@ const setTreeItemPrefix = (tree: TreeOption[]) => {
 
 /**给树节点设置三个点选项图标 */
 const renderSuffix = ({ option }: { option: TreeOption }) => {
-    const { key } = option
     return h(NIcon, null, {
         default: () => h(EllipsisVertical, {
             onClick: (e: PointerEvent) => {
                 showDropdown.value = true
                 dropdownX.value = e.clientX
                 dropdownY.value = e.clientY
-                contextMenuClickedTreeNodeKey.value = key as string
+                contextMenuSelectedTreeNode.value = option
                 e.stopPropagation()
             }
         })
     })
 }
 
-/**
- * 渲染一个关闭的文件夹图标前缀
- */
-const folderPrefix = () =>
-    h(NIcon, null, {
-        default: () => h(Folder)
-    })
-
-/**
- * 渲染一个打开的文件夹图标前缀
- */
-const folderOpenOutlinePrefix = () =>
-    h(NIcon, null, {
-        default: () => h(FolderOpenOutline)
-    })
-
-// /**
-//  * 渲染一个文件图标前缀
-//  */
-// const fileTrayFullOutlinePrefix = () =>
-//     h(NIcon, null, {
-//         default: () => h(FileTrayFullOutline)
-//     })
-
-/**点击树节点时改变前缀图标样式 */
-// const updatePrefixWithExpaned = (
-//     _keys: Array<string | number>,
-//     _option: Array<TreeOption | null>,
-//     meta: {
-//         node: TreeOption | null
-//         action: 'expand' | 'collapse' | 'filter'
-//     }
-// ) => {
-//     if (!meta.node) return
-//     switch (meta.action) {
-//         case 'expand':
-//             meta.node.prefix = folderOpenOutlinePrefix
-//             break
-//         case 'collapse':
-//             meta.node.prefix = folderPrefix
-//             break
-//     }
-// }
 
 /**节点展开开关的样式 */
 const renderSwitcherIcon = ({ option, expanded }: { option: TreeOption, expanded: boolean }) => {
@@ -353,8 +358,8 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
         async onClick() {
             if (!option.disabled) {
                 // window.$message.info('[Click] ' + option.label)
-                if (selectedTreeNodeKey.value !== key as string) {
-                    selectedTreeNodeKey.value = key as string
+                if (selectedTreeNode.value?.key !== key as string) {
+                    selectedTreeNode.value = option
                     // 点击切换到某个分类目录时，获取该目录下面的书签条目
                     await getBookmarkItemList(key as string)
                 }
@@ -365,7 +370,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
             showDropdown.value = true
             dropdownX.value = e.clientX
             dropdownY.value = e.clientY
-            contextMenuClickedTreeNodeKey.value = key as string
+            contextMenuSelectedTreeNode.value = option
             e.preventDefault()
         }
     }
