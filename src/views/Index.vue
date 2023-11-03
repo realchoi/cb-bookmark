@@ -3,7 +3,10 @@
         <!--书签分类目录树 start-->
         <div class="w-xs h-full">
             <n-tree block-line expand-on-click :data="bookmarkCategoryTree" :node-props="nodeProps"
-                :expanded-keys="expandedKeys" :render-switcher-icon="renderSwitcherIcon" />
+                :expanded-keys="expandedTreeNodeKeys" :render-switcher-icon="renderSwitcherIcon"
+                :render-suffix="renderSuffix" />
+            <n-dropdown trigger="manual" placement="bottom-start" :show="showDropdown" :options="(dropdownOptions as any)"
+                :x="x" :y="y" @select="handleSelect" @clickoutside="handleClickoutside" />
         </div>
         <!--书签分类目录树 end-->
         <!--书签条目列表 start-->
@@ -15,15 +18,42 @@
         </div>
         <!--书签条目列表 end-->
     </div>
+    <!--新增书签信息的模态框 start-->
+    <n-modal v-model:show="showAddItemModal" :mask-closable="false" preset="card" style="width: 600px;" title="添加新书签">
+        <n-form :model="bookmarkItemForm" size="medium" label-placement="left">
+            <n-form-item label="名称">
+                <n-input v-model:value="bookmarkItemForm.name" @keydown.enter.prevent placeholder="请输入书签名称" />
+            </n-form-item>
+            <n-form-item label="网址">
+                <n-input v-model:value="bookmarkItemForm.url" @keydown.enter.prevent placeholder="请输入书签网址" />
+            </n-form-item>
+            <n-row :gutter="[0, 24]">
+                <n-col :span="24">
+                    <div style="display: flex; justify-content: flex-end">
+                        <n-space>
+                            <n-button @click="showAddItemModal = false">
+                                取消
+                            </n-button>
+                            <n-button type="primary" @click="saveBookmarkItem">
+                                保存
+                            </n-button>
+                        </n-space>
+                    </div>
+                </n-col>
+            </n-row>
+        </n-form>
+    </n-modal>
+    <!--新增书签信息的模态框 end-->
 </template>
 
 <script lang="ts" setup>
 import { ref, h, onMounted } from 'vue'
-import { NIcon, TreeOption } from 'naive-ui'
+import { NIcon, TreeOption, DropdownOption } from 'naive-ui'
 import {
     Folder,
     FolderOpenOutline,
-    CaretForward
+    CaretForward,
+    EllipsisVertical
     // FileTrayFullOutline
 } from '@vicons/ionicons5'
 import BookmarkItem from '@/components/BookmarkItem.vue';
@@ -38,15 +68,80 @@ const bookmarkCategoryTree = ref<TreeOption[]>([])
 /**书签条目的数据 */
 const bookmarkItems = ref<BookmarkItemDto[]>([])
 
+/**是否展示右键菜单 */
+const showDropdown = ref(false)
+/**右键菜单 */
+const dropdownOptions = ref<DropdownOption[]>([
+    {
+        label: '添加新书签',
+        key: 'add-item'
+    },
+    {
+        label: '添加新文件夹',
+        key: 'add-category'
+    },
+    {
+        label: '重命名',
+        key: 'rename'
+    },
+    {
+        label: '删除',
+        key: 'delete'
+    }
+])
+const x = ref(0)
+const y = ref(0)
+
+const showAddItemModal = ref(false)
+
+const handleSelect = (key: string | number) => {
+    window.$message.info(String(key) + ': ' + contextMenuClickedTreeNodeKey.value)
+    showDropdown.value = false
+    switch (key) {
+        case 'add-item':
+            showAddItemModal.value = true
+            break
+    }
+}
+const handleClickoutside = () => {
+    showDropdown.value = false
+}
+
+const bookmarkItemForm = ref<{ name: string, url: string, categoryId: string, userId: string }>({
+    name: '',
+    url: '',
+    categoryId: '',
+    userId: ''
+})
+
+/**
+ * 保存书签
+ */
+const saveBookmarkItem = async () => {
+    bookmarkItemForm.value.userId = userStore.userInfo.id
+    bookmarkItemForm.value.categoryId = contextMenuClickedTreeNodeKey.value as string
+    const result = await axios.post<string>('/bookmark/item', bookmarkItemForm.value)
+    if (result) {
+        window.$message.success('保存成功')
+        await getBookmarkItemList(selectedTreeNodeKey.value as string)
+    }
+    else {
+        window.$message.error('保存失败')
+    }
+    showAddItemModal.value = false
+}
+
 // 组建挂载后获取书签分类目录树的数据
 onMounted(async () => {
     await getBookmarkCategoryTree()
 })
 
-/**展开的节点的 key */
-const expandedKeys = ref<Array<string | number>>([])
-/**当前点击的节点的 key */
-const clickedKey = ref<string | number>('')
+/**展开的树节点的 key */
+const expandedTreeNodeKeys = ref<Array<string | number>>([])
+/**当前选中的树节点的 key */
+const selectedTreeNodeKey = ref<string | number>('')
+/**树节点右键菜单点击的节点的 key */
+const contextMenuClickedTreeNodeKey = ref<string | number>('')
 
 /**
  * 调用接口获取书签分类目录树数据
@@ -98,6 +193,22 @@ const setTreeItemPrefix = (tree: TreeOption[]) => {
             setTreeItemPrefix(ele.children);
         }
     }
+}
+
+/**给树节点设置三个点选项图标 */
+const renderSuffix = ({ option }: { option: TreeOption }) => {
+    const { key } = option
+    return h(NIcon, null, {
+        default: () => h(EllipsisVertical, {
+            onClick: (e: PointerEvent) => {
+                x.value = e.clientX
+                y.value = e.clientY
+                showDropdown.value = true
+                contextMenuClickedTreeNodeKey.value = key as string
+                e.stopPropagation()
+            }
+        })
+    })
 }
 
 /**
@@ -152,11 +263,11 @@ const renderSwitcherIcon = ({ option, expanded }: { option: TreeOption, expanded
             onClick: (e: PointerEvent) => {
                 if (expanded) {
                     option.prefix = folderPrefix
-                    expandedKeys.value = expandedKeys.value.filter(item => key !== item)
+                    expandedTreeNodeKeys.value = expandedTreeNodeKeys.value.filter(item => key !== item)
                 }
                 else {
                     option.prefix = folderOpenOutlinePrefix
-                    expandedKeys.value.push(key as string)
+                    expandedTreeNodeKeys.value.push(key as string)
                 }
                 e.stopPropagation()
             }
@@ -170,12 +281,20 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
         async onClick() {
             if (!option.disabled) {
                 // window.$message.info('[Click] ' + option.label)
-                if (clickedKey.value !== option.key as string) {
-                    clickedKey.value = option.key as string
+                if (selectedTreeNodeKey.value !== option.key as string) {
+                    selectedTreeNodeKey.value = option.key as string
                     // 点击切换到某个分类目录时，获取该目录下面的书签条目
                     await getBookmarkItemList(option.key as string)
                 }
             }
+        },
+        onContextmenu(e: MouseEvent): void {
+            // options.value = [option]
+            showDropdown.value = true
+            x.value = e.clientX
+            y.value = e.clientY
+            console.log(e.clientX, e.clientY)
+            e.preventDefault()
         }
     }
 }
