@@ -164,7 +164,7 @@ let addOrUpdateCategory: 'add' | 'update' = 'add'
 
 /**右键菜单选中事件 */
 const handleDropdownMenuSelect = (key: string | number) => {
-    window.$message.info(String(key) + ': ' + contextMenuSelectedTreeNode.value?.key)
+    // window.$message.info(String(key) + ': ' + contextMenuSelectedTreeNode.value?.key)
     showDropdown.value = false
     switch (key) {
         case 'add-item':
@@ -200,6 +200,30 @@ const handleDropdownMenuSelect = (key: string | number) => {
                 userId: ''
             }
             showAddCategoryModal.value = true
+            break
+        case 'delete':
+            window.$dialog.error({
+                title: '警告',
+                content: '此操作将会同步删除所有子文件夹和所有书签，确定吗？',
+                positiveText: '删了吧',
+                negativeText: '算了算了',
+                onPositiveClick: async () => {
+                    const categoryId = contextMenuSelectedTreeNode.value?.key as string
+                    const userId = userStore.userInfo.id
+                    const result = await axios.delete<boolean>(`/bookmark/category/${categoryId}?userId=${userId}`)
+                    if (result) {
+                        window.$message.success('已删除')
+                        await getBookmarkCategoryTree()
+                        await getBookmarkItemList(selectedTreeNode.value?.key as string)
+                    }
+                    else {
+                        window.$message.error('可能发生了一点错误...')
+                    }
+                },
+                onNegativeClick: () => {
+                    window.$message.info('哈哈哈你怂了')
+                }
+            })
             break
     }
 }
