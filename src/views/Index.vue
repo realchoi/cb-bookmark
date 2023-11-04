@@ -5,8 +5,8 @@
             <n-tree block-line expand-on-click :data="bookmarkCategoryTree" :node-props="nodeProps"
                 :expanded-keys="expandedTreeNodeKeys" :render-switcher-icon="renderSwitcherIcon"
                 :render-suffix="renderSuffix" />
-            <n-dropdown trigger="manual" placement="bottom-start" :show="showDropdown" :options="(dropdownOptions as any)"
-                :x="dropdownX" :y="dropdownY" @select="handleDropdownMenuSelect"
+            <n-dropdown ref="dropdownRef" trigger="manual" placement="bottom-start" :show="showDropdown"
+                :options="(dropdownOptions as any)" :x="dropdownX" :y="dropdownY" @select="handleDropdownMenuSelect"
                 @clickoutside="handleDropdownMenuClickoutside" />
         </div>
         <!--书签分类目录树 end-->
@@ -88,6 +88,8 @@ import type { BookmarkCategoryTreeDto } from '@/models/bookmarkCategories/bookma
 import type { GetBookmarkItemListInput, BookmarkItemDto } from '@/models/bookmarkItems/bookmarkItemModel'
 
 const userStore = useUserStore()
+
+const dropdownRef = ref<null | HTMLElement>(null)
 
 // 组建挂载后获取书签分类目录树的数据
 onMounted(async () => {
@@ -395,6 +397,18 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
             dropdownX.value = e.clientX
             dropdownY.value = e.clientY
             contextMenuSelectedTreeNode.value = option
+            // 顶级文件夹不能重命名和删除
+            let disableOptions = dropdownOptions.value.filter(p => p.key === 'rename' || p.key === 'delete')
+            if (!contextMenuSelectedTreeNode.value.parentId) {
+                disableOptions.forEach(option => {
+                    option!.disabled = true
+                })
+            }
+            else {
+                disableOptions.forEach(option => {
+                    option!.disabled = false
+                })
+            }
             e.preventDefault()
         }
     }
