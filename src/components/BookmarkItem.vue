@@ -27,12 +27,12 @@
     </div>
     <!--修改书签信息的模态框 start-->
     <n-modal v-model:show="showModal" :mask-closable="false" preset="card" style="width: 600px;" title="修改书签">
-        <n-form :model="form" size="medium" label-placement="left">
+        <n-form :model="bookmarkItemForm" size="medium" label-placement="left">
             <n-form-item label="名称">
-                <n-input v-model:value="form.name" @keydown.enter.prevent placeholder="请输入书签名称" />
+                <n-input v-model:value="bookmarkItemForm.name" @keydown.enter.prevent placeholder="请输入书签名称" />
             </n-form-item>
             <n-form-item label="网址">
-                <n-input v-model:value="form.url" @keydown.enter.prevent placeholder="请输入书签网址" />
+                <n-input v-model:value="bookmarkItemForm.url" @keydown.enter.prevent placeholder="请输入书签网址" />
             </n-form-item>
             <n-row :gutter="[0, 24]">
                 <n-col :span="24">
@@ -41,7 +41,7 @@
                             <n-button @click="showModal = false">
                                 取消
                             </n-button>
-                            <n-button type="primary" @click="save">
+                            <n-button type="primary" @click="saveBookmarkItem">
                                 保存
                             </n-button>
                         </n-space>
@@ -72,11 +72,12 @@ const emits = defineEmits(['refresh'])
 
 const userStore = useUserStore()
 
-const form = ref<{ id: string, name: string, url: string, categoryId: string }>({
+const bookmarkItemForm = ref<{ id: string, name: string, url: string, categoryId: string, userId: string }>({
     id: props.bookmark.id,
     name: props.bookmark.name,
     url: props.bookmark.url,
-    categoryId: props.bookmark.categoryId
+    categoryId: props.bookmark.categoryId,
+    userId: userStore.userInfo.id
 })
 
 const showModal = ref(false)
@@ -101,6 +102,13 @@ const open = (url: string) => {
 }
 
 const edit = () => {
+    bookmarkItemForm.value = {
+        id: props.bookmark.id,
+        name: props.bookmark.name,
+        url: props.bookmark.url,
+        categoryId: props.bookmark.categoryId,
+        userId: userStore.userInfo.id
+    }
     showModal.value = true
 }
 
@@ -122,10 +130,17 @@ const handleNegativeClick = () => {
 }
 
 /**
- * 保存书签
+ * 保存书签条目
  */
-const save = () => {
-    window.$message.success('保存成功')
+const saveBookmarkItem = async () => {
+    const result = await axios.post<string>('/bookmark/item', bookmarkItemForm.value)
+    if (result) {
+        window.$message.success('保存成功')
+        emits('refresh', props.bookmark.categoryId)
+    }
+    else {
+        window.$message.error('可能发生了一点错误...')
+    }
     showModal.value = false
 }
 </script>
