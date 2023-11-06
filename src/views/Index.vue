@@ -5,8 +5,8 @@
             <n-tree block-line expand-on-click :data="bookmarkCategoryTree" :node-props="nodeProps"
                 :expanded-keys="expandedTreeNodeKeys" :render-switcher-icon="renderSwitcherIcon"
                 :render-suffix="renderSuffix" />
-            <n-dropdown ref="dropdownRef" trigger="manual" placement="bottom-start" :show="showDropdown"
-                :options="(dropdownOptions as any)" :x="dropdownX" :y="dropdownY" @select="handleDropdownMenuSelect"
+            <n-dropdown trigger="manual" placement="bottom-start" :show="showDropdown" :options="(dropdownOptions as any)"
+                :x="dropdownX" :y="dropdownY" @select="handleDropdownMenuSelect"
                 @clickoutside="handleDropdownMenuClickoutside" />
         </div>
         <!--书签分类目录树 end-->
@@ -14,7 +14,8 @@
         <div class="flex flex-1 h-full ml flex-justify-center items-center">
             <div class="w-80% h-90% pt-24px pb-24px"
                 style="background-color: white; border-radius: 8px; box-shadow: color-mix(in srgb, rgb( 60,64,67 ) 30%, transparent) 0 1px 2px 0, color-mix(in srgb, rgb( 60,64,67 ) 15%, transparent) 0 2px 6px 2px; overflow-y: auto;">
-                <BookmarkItem :bookmark="bookmark" :key="bookmark.url" v-for="bookmark in bookmarkItems"></BookmarkItem>
+                <BookmarkItem @refresh="getBookmarkItemList" :bookmark="bookmark" :key="bookmark.url"
+                    v-for="bookmark in bookmarkItems"></BookmarkItem>
             </div>
         </div>
         <!--书签条目列表 end-->
@@ -88,8 +89,6 @@ import type { BookmarkCategoryTreeDto } from '@/models/bookmarkCategories/bookma
 import type { GetBookmarkItemListInput, BookmarkItemDto } from '@/models/bookmarkItems/bookmarkItemModel'
 
 const userStore = useUserStore()
-
-const dropdownRef = ref<null | HTMLElement>(null)
 
 // 组建挂载后获取书签分类目录树的数据
 onMounted(async () => {

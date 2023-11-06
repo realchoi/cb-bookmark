@@ -55,18 +55,28 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue'
+import axios from '@/utils/httpUtil'
+import { useUserStore } from '@/store/user'
 
 const props = defineProps<{
     /**书签信息 */
     bookmark: {
+        id: string,
         name: string,
-        url: string
+        url: string,
+        categoryId: string
     }
 }>()
 
-const form = ref<{ name: string, url: string }>({
+const emits = defineEmits(['refresh'])
+
+const userStore = useUserStore()
+
+const form = ref<{ id: string, name: string, url: string, categoryId: string }>({
+    id: props.bookmark.id,
     name: props.bookmark.name,
-    url: props.bookmark.url
+    url: props.bookmark.url,
+    categoryId: props.bookmark.categoryId
 })
 
 const showModal = ref(false)
@@ -94,8 +104,17 @@ const edit = () => {
     showModal.value = true
 }
 
-const handlePositiveClick = () => {
-    window.$message.success('已删除')
+const handlePositiveClick = async () => {
+    const itemId = props.bookmark.id
+    const userId = userStore.userInfo.id
+    const result = await axios.delete<boolean>(`/bookmark/item/${itemId}?userId=${userId}`)
+    if (result) {
+        window.$message.success('已删除')
+        emits('refresh', props.bookmark.categoryId)
+    }
+    else {
+        window.$message.error('可能发生了一点错误...')
+    }
 }
 
 const handleNegativeClick = () => {
