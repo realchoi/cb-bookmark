@@ -13,6 +13,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # 指定 node 版本
+      - uses: actions/setup-node@v2 
+        with:
+          node-version: '14'
+
       - name: Build
         run: |
           cd cb-bookmark # 进入项目目录
