@@ -28,13 +28,13 @@ jobs:
       - name: Deploy 🚀
         uses: cross-the-world/scp-pipeline@master
         env:
-          WELCOME: "ssh scp ssh pipelines"
-          LASTSSH: "Doing something after copying"
+          VITE_BASE: "http://192.210.202.26"
+          VITE_APP_ENV: "production"
         with:
          host: ${{ secrets.CB_HOST }}
          user: ${{ secrets.CB_USER }}
          pass: ${{ secrets.CB_PASS }}
          connect_timeout: 10s
-         local: './cb-bookmark/dist/' # 这里是下一步要创建的vue项目构建完成后的静态资源路径
+         local: './dist/' # 这里是下一步要创建的vue项目构建完成后的静态资源路径
          remote: /www/cb-bookmark/dist # 这里是 step1 中，在服务器上创建用于存放静态资源的文件夹
 
