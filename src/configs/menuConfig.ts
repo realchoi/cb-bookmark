@@ -5,28 +5,16 @@ import type { MenuItem } from '@/models/common/menuItem'
  */
 export const menus: MenuItem[] = [
     {
-        name: "文本工具",
-        path: "/text"
+        name: "我的书签",
+        path: ""
     },
     {
-        name: "图片工具",
-        path: "/image"
+        name: "导入书签",
+        path: "/import"
     },
     {
-        name: "视频工具",
-        path: "/video"
-    },
-    {
-        name: "音频工具",
-        path: "/audio"
-    },
-    {
-        name: "加密工具",
-        path: "/encryption"
-    },
-    {
-        name: "趣味工具",
-        path: "/funny"
+        name: "导出书签",
+        path: "/export"
     },
     {
         name: "免费工具导航",
