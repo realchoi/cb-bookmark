@@ -20,7 +20,6 @@ jobs:
 
       - name: Build
         run: |
-          # cd /www/cb-bookmark # 进入项目目录
           npm install  # 安装依赖
           npm run build  # 执行打包
   
@@ -33,5 +32,6 @@ jobs:
          pass: ${{ secrets.SSH_PASS }}
          connect_timeout: 10s
          local: './dist/' # 这里是下一步要创建的vue项目构建完成后的静态资源路径
-         remote: /www/cb-bookmark/dist # 这里是 step1 中，在服务器上创建用于存放静态资源的文件夹
-
+         remote: /www/cb-bookmark/dist # 在服务器上创建用于存放静态资源的文件夹
+         last_ssh: |
+           nginx -s reload # 部署成功后需要重启 nginx
