@@ -12,6 +12,26 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/Index.vue')
     },
     {
+        path: '/import',
+        name: 'Import',
+        meta: {
+            title: '导入书签',
+            keepAlive: true,
+            requireAuth: true
+        },
+        component: () => import('@/views/ImportBookmarkItem.vue')
+    },
+    {
+        path: '/export',
+        name: 'Export',
+        meta: {
+            title: '导出书签',
+            keepAlive: true,
+            requireAuth: true
+        },
+        component: () => import('@/views/ExportBookmarkItem.vue')
+    },
+    {
         path: '/login',
         name: 'Login',
         meta: {
