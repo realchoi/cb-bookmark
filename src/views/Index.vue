@@ -294,7 +294,7 @@ const saveBookmarkCategory = async () => {
 const getBookmarkCategoryTree = async () => {
     if (userStore.loginStatus && userStore.userInfo && userStore.userInfo.id) {
         const result = await axios.get<BookmarkCategoryTreeDto[]>(`/bookmark/category/tree?userId=${userStore.userInfo.id}`)
-        if (result) {
+        if (result && result.length > 0) {
             setTreeItemPrefix(result)
             bookmarkCategoryTree.value = result
         }
