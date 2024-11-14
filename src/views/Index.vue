@@ -5,8 +5,8 @@
             <n-tree block-line expand-on-click :data="bookmarkCategoryTree" :node-props="nodeProps"
                 :expanded-keys="expandedTreeNodeKeys" :render-switcher-icon="renderSwitcherIcon"
                 :render-suffix="renderSuffix" />
-            <n-dropdown trigger="manual" placement="bottom-start" :show="showDropdown" :options="(dropdownOptions as any)"
-                :x="dropdownX" :y="dropdownY" @select="handleDropdownMenuSelect"
+            <n-dropdown trigger="manual" placement="bottom-start" :show="showDropdown"
+                :options="(dropdownOptions as any)" :x="dropdownX" :y="dropdownY" @select="handleDropdownMenuSelect"
                 @clickoutside="handleDropdownMenuClickoutside" />
         </div>
         <!--书签分类目录树 end-->
@@ -292,18 +292,10 @@ const saveBookmarkCategory = async () => {
  * 调用接口获取书签分类目录树数据
  */
 const getBookmarkCategoryTree = async () => {
-    if (userStore.loginStatus && userStore.userInfo && userStore.userInfo.id) {
-        const result = await axios.get<BookmarkCategoryTreeDto[]>(`/bookmark/category/tree?userId=${userStore.userInfo.id}`)
-        if (result && result.length > 0) {
-            setTreeItemPrefix(result)
-            bookmarkCategoryTree.value = result
-        }
-    }
-    else {
-        window.$dialog.error({
-            title: '未登录',
-            content: '请先登录后再使用'
-        })
+    const result = await axios.get<BookmarkCategoryTreeDto[]>(`/bookmark/category/tree?userId=${userStore.userInfo.id}`)
+    if (result && result.length > 0) {
+        setTreeItemPrefix(result)
+        bookmarkCategoryTree.value = result
     }
 }
 
@@ -311,21 +303,13 @@ const getBookmarkCategoryTree = async () => {
  * 调用接口获取书签分类目录树数据
  */
 const getBookmarkItemList = async (categoryId: string) => {
-    if (userStore.loginStatus && userStore.userInfo && userStore.userInfo.id) {
-        const params: GetBookmarkItemListInput = {
-            userId: userStore.userInfo.id,
-            categoryId: categoryId
-        }
-        const result = await axios.post<BookmarkItemDto[]>(`/bookmark/item/list`, params)
-        if (result) {
-            bookmarkItems.value = result
-        }
+    const params: GetBookmarkItemListInput = {
+        userId: userStore.userInfo.id,
+        categoryId: categoryId
     }
-    else {
-        window.$dialog.error({
-            title: '未登录',
-            content: '请先登录后再使用'
-        })
+    const result = await axios.post<BookmarkItemDto[]>(`/bookmark/item/list`, params)
+    if (result) {
+        bookmarkItems.value = result
     }
 }
 

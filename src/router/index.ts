@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router"
+import { useUserStore } from '@/store/user'  // 使用 Pinia 存储用户状态
+import { createDiscreteApi } from 'naive-ui'  // 用于显示提示信息
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -56,6 +58,28 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
     history: createWebHistory(),
     routes
+})
+
+const { message } = createDiscreteApi(['message'])
+
+router.beforeEach((to, from, next) => {
+    console.log('from', from)
+    console.log('to', to)
+    const userStore = useUserStore()
+
+    // 判断该路由是否需要登录权限
+    if (to.meta.requireAuth) {
+        // 判断用户是否已登录
+        if (userStore.loginStatus && userStore.userInfo && userStore.userInfo.id) {
+            next()
+        } else {
+            message.error('请先登录后再使用')
+            next('/login')
+        }
+    } else {
+        // 不需要认证的路由直接放行
+        next()
+    }
 })
 
 export default router

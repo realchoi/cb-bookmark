@@ -2,7 +2,7 @@
     <n-tree block-line expand-on-click :data="bookmarkCategoryTree" :node-props="nodeProps"
         :on-update:expanded-keys="updatePrefixWithExpaned" />
 </template>
-  
+
 <script lang="ts" setup>
 import { h, ref, onMounted } from 'vue'
 import { NIcon, TreeOption } from 'naive-ui'
@@ -27,18 +27,10 @@ onMounted(async () => {
  * 调用接口获取书签分类目录树数据
  */
 const getBookmarkCategoryTree = async () => {
-    if (userStore.loginStatus && userStore.userInfo && userStore.userInfo.id) {
-        const result = await axios.get<TreeOption[]>(`/bookmark/category/tree?userId=${userStore.userInfo.id}`)
-        if (result) {
-            setTreeItemPrefix(result)
-            bookmarkCategoryTree.value = result
-        }
-    }
-    else {
-        window.$dialog.error({
-            title: '未登录',
-            content: '请先登录后再使用'
-        })
+    const result = await axios.get<TreeOption[]>(`/bookmark/category/tree?userId=${userStore.userInfo.id}`)
+    if (result) {
+        setTreeItemPrefix(result)
+        bookmarkCategoryTree.value = result
     }
 }
 

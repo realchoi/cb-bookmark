@@ -1,60 +1,43 @@
 <template>
-    <div class="bookmark-item">
-        <img class="favicon" :src="getFaviconUrlSelf(bookmark.url)">
-        <div class="title">
-            <span class="name">{{ bookmark.name }}</span>
-            <span class="url">({{ bookmark.url }})</span>
-        </div>
-
-        <div class="action">
-            <n-button size="tiny" type="primary" @click="open(bookmark.url)">
-                打开
-            </n-button>
-            <n-button size="tiny" type="info" @click="edit">
-                编辑
-            </n-button>
-            <n-popconfirm positive-text="删除" negative-text="不删了" @positive-click="handlePositiveClick"
-                @negative-click="handleNegativeClick" :positive-button-props="{ type: 'error', size: 'tiny' }"
-                :negative-button-props="{ size: 'tiny' }">
-                <template #trigger>
-                    <n-button size="tiny" type="error">
-                        删除
-                    </n-button>
+    <n-spin :show="loading">
+        <div class="bookmark-item">
+            <img class="favicon" :src="getFaviconUrlSelf(bookmark.url)">
+            <div class="title" @dblclick="startEdit" v-click-outside="cancelEdit">
+                <template v-if="!isEditing">
+                    <span class="name">{{ bookmark.name }}</span>
+                    <span class="url">({{ bookmark.url }})</span>
                 </template>
-                确定删除当前书签？
-            </n-popconfirm>
+                <template v-else>
+                    <n-input-group>
+                        <n-input v-model:value="editForm.name" @keyup.enter="saveEdit" @keyup.esc="cancelEdit"
+                            ref="nameInputRef" size="tiny" />
+                        <n-input v-model:value="editForm.url" @keyup.enter="saveEdit" @keyup.esc="cancelEdit"
+                            size="tiny" />
+                    </n-input-group>
+                </template>
+            </div>
+
+            <div class="action">
+                <n-button size="tiny" type="primary" @click="open(bookmark.url)">
+                    打开
+                </n-button>
+                <n-popconfirm positive-text="删除" negative-text="不删了" @positive-click="handlePositiveClick"
+                    @negative-click="handleNegativeClick" :positive-button-props="{ type: 'error', size: 'tiny' }"
+                    :negative-button-props="{ size: 'tiny' }">
+                    <template #trigger>
+                        <n-button size="tiny" type="error">
+                            删除
+                        </n-button>
+                    </template>
+                    确定删除当前书签？
+                </n-popconfirm>
+            </div>
         </div>
-    </div>
-    <!--修改书签信息的模态框 start-->
-    <n-modal v-model:show="showModal" :mask-closable="false" preset="card" style="width: 600px;" title="修改书签">
-        <n-form :model="bookmarkItemForm" size="medium" label-placement="left">
-            <n-form-item label="名称">
-                <n-input v-model:value="bookmarkItemForm.name" @keydown.enter.prevent placeholder="请输入书签名称" />
-            </n-form-item>
-            <n-form-item label="网址">
-                <n-input v-model:value="bookmarkItemForm.url" @keydown.enter.prevent placeholder="请输入书签网址" />
-            </n-form-item>
-            <n-row :gutter="[0, 24]">
-                <n-col :span="24">
-                    <div style="display: flex; justify-content: flex-end">
-                        <n-space>
-                            <n-button @click="showModal = false">
-                                取消
-                            </n-button>
-                            <n-button type="primary" @click="saveBookmarkItem">
-                                保存
-                            </n-button>
-                        </n-space>
-                    </div>
-                </n-col>
-            </n-row>
-        </n-form>
-    </n-modal>
-    <!--修改书签信息的模态框 end-->
+    </n-spin>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import axios from '@/utils/httpUtil'
 import { useUserStore } from '@/store/user'
 
@@ -71,8 +54,10 @@ const props = defineProps<{
 const emits = defineEmits(['refresh'])
 
 const userStore = useUserStore()
+const isEditing = ref(false)
+const nameInputRef = ref<HTMLInputElement | null>(null)
 
-const bookmarkItemForm = ref<{ id: string, name: string, url: string, categoryId: string, userId: string }>({
+const editForm = ref({
     id: props.bookmark.id,
     name: props.bookmark.name,
     url: props.bookmark.url,
@@ -80,17 +65,46 @@ const bookmarkItemForm = ref<{ id: string, name: string, url: string, categoryId
     userId: userStore.userInfo.id
 })
 
-const showModal = ref(false)
+const loading = ref(false)
 
-// const getFaviconUrl = (url: string) => {
-//     // 生成网站 favicon URL 的逻辑
-//     return 'https://www.google.com/s2/favicons?domain=' + url
-// }
+// 开始编辑
+const startEdit = () => {
+    isEditing.value = true
+    // 重置编辑表单
+    editForm.value = {
+        id: props.bookmark.id,
+        name: props.bookmark.name,
+        url: props.bookmark.url,
+        categoryId: props.bookmark.categoryId,
+        userId: userStore.userInfo.id
+    }
+    // 等待 DOM 更新后聚焦输入框
+    nextTick(() => {
+        nameInputRef.value?.focus()
+    })
+}
 
-// const getFaviconUrl2 = (url: string) => {
-//     // 生成网站 favicon URL 的逻辑
-//     return 'https://favicongrabber.com/api/grab/' + url
-// }
+// 保存编辑
+const saveEdit = async () => {
+    loading.value = true
+    try {
+        const result = await axios.post<string>('/bookmark/item', editForm.value)
+        if (result) {
+            window.$message.success('保存成功')
+            isEditing.value = false
+            emits('refresh', props.bookmark.categoryId)
+        } else {
+            window.$message.error('保存失败')
+        }
+    } finally {
+        loading.value = false
+    }
+}
+
+// 取消编辑
+const cancelEdit = () => {
+    isEditing.value = false
+}
 
 const getFaviconUrlSelf = (url: string) => {
     let hostname = new URL(url).hostname;
@@ -99,17 +113,6 @@ const getFaviconUrlSelf = (url: string) => {
 
 const open = (url: string) => {
     window.open(url, '_blank')
-}
-
-const edit = () => {
-    bookmarkItemForm.value = {
-        id: props.bookmark.id,
-        name: props.bookmark.name,
-        url: props.bookmark.url,
-        categoryId: props.bookmark.categoryId,
-        userId: userStore.userInfo.id
-    }
-    showModal.value = true
 }
 
 const handlePositiveClick = async () => {
@@ -129,19 +132,21 @@ const handleNegativeClick = () => {
     window.$message.info('取消删除')
 }
 
-/**
- * 保存书签条目
- */
-const saveBookmarkItem = async () => {
-    const result = await axios.post<string>('/bookmark/item', bookmarkItemForm.value)
-    if (result) {
-        window.$message.success('保存成功')
-        emits('refresh', props.bookmark.categoryId)
+// 添加 vClickOutside 指令
+const vClickOutside = {
+    mounted(el: HTMLElement, binding: { value: () => void }) {
+        el._clickOutside = (event: Event) => {
+            if (!(el === event.target || el.contains(event.target as Node))) {
+                binding.value()
+            }
+        }
+        document.addEventListener('click', el._clickOutside)
+    },
+    unmounted(el: HTMLElement) {
+        if (el._clickOutside) {
+            document.removeEventListener('click', el._clickOutside)
+        }
     }
-    else {
-        window.$message.error('可能发生了一点错误...')
-    }
-    showModal.value = false
 }
 </script>
 
@@ -151,6 +156,7 @@ const saveBookmarkItem = async () => {
     align-items: center;
     padding: 8px;
     border-bottom: 1px solid #eee;
+    position: relative;
 }
 
 .favicon {
@@ -161,6 +167,15 @@ const saveBookmarkItem = async () => {
 
 .title {
     flex: 1;
+    cursor: text;
+}
+
+.title :deep(.n-input-group) {
+    width: 100%;
+}
+
+.title :deep(.n-input) {
+    margin-right: 8px;
 }
 
 .name {

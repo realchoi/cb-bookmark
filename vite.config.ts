@@ -27,7 +27,7 @@ export default defineConfig((config) => {
     base: viteEnv.VITE_BASE,
     server: {
       host: '0.0.0.0',
-      port: 1996,
+      port: 4433,
       // 端口占用直接退出
       strictPort: true,
       proxy: {
