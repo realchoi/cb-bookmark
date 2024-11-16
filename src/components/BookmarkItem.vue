@@ -10,9 +10,9 @@
                 <template v-else>
                     <n-input-group>
                         <n-input v-model:value="editForm.name" @keyup.enter="saveEdit" @keyup.esc="cancelEdit"
-                            ref="nameInputRef" size="tiny" />
+                            ref="nameInputRef" size="tiny" placeholder="书签名称" />
                         <n-input v-model:value="editForm.url" @keyup.enter="saveEdit" @keyup.esc="cancelEdit"
-                            size="tiny" />
+                            size="tiny" placeholder="书签地址" />
                     </n-input-group>
                 </template>
             </div>

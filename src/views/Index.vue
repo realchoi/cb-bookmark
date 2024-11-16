@@ -13,30 +13,41 @@
         <!--书签条目列表 start-->
         <div class="flex flex-1 h-full ml flex-justify-center items-center">
             <div class="w-80% h-90% pt-24px pb-24px"
-                style="background-color: white; border-radius: 8px; box-shadow: color-mix(in srgb, rgb( 60,64,67 ) 30%, transparent) 0 1px 2px 0, color-mix(in srgb, rgb( 60,64,67 ) 15%, transparent) 0 2px 6px 2px; overflow-y: auto;">
-                <BookmarkItem @refresh="getBookmarkItemList" :bookmark="bookmark" :key="bookmark.url"
-                    v-for="bookmark in bookmarkItems"></BookmarkItem>
+                style="background-color: white; border-radius: 8px; box-shadow: color-mix(in srgb, rgb( 60,64,67 ) 30%, transparent) 0 1px 2px 0, color-mix(in srgb, rgb( 60,64,67 ) 15%, transparent) 0 2px 6px 2px;">
+                <!-- 书签列表 -->
+                <div class="bookmark-list" style="overflow-y: auto; height: calc(100% - 60px);">
+                    <BookmarkItem @refresh="getBookmarkItemList" :bookmark="bookmark" :key="bookmark.url"
+                        v-for="bookmark in bookmarkItems"></BookmarkItem>
+                </div>
+                
+                <!-- 添加新书签按钮 -->
+                <div class="add-bookmark-btn">
+                    <n-button dashed type="primary" @click="showAddItemModal = true" v-if="selectedTreeNode">
+                        <template #icon>
+                            <n-icon><Add /></n-icon>
+                        </template>
+                        添加书签
+                    </n-button>
+                </div>
             </div>
         </div>
         <!--书签条目列表 end-->
     </div>
     <!--新增书签信息的模态框 start-->
     <n-modal v-model:show="showAddItemModal" :mask-closable="false" preset="card" style="width: 600px;" title="添加新书签">
-        <n-form :model="bookmarkItemForm" size="medium" label-placement="left">
-            <n-form-item label="名称">
+        <n-form :model="bookmarkItemForm" :rules="formRules" ref="formRef" size="medium" label-placement="left">
+            <n-form-item label="名称" path="name">
                 <n-input v-model:value="bookmarkItemForm.name" @keydown.enter.prevent placeholder="请输入书签名称" />
             </n-form-item>
-            <n-form-item label="网址">
+            <n-form-item label="网址" path="url">
                 <n-input v-model:value="bookmarkItemForm.url" @keydown.enter.prevent placeholder="请输入书签网址" />
             </n-form-item>
             <n-row :gutter="[0, 24]">
                 <n-col :span="24">
                     <div style="display: flex; justify-content: flex-end">
                         <n-space>
-                            <n-button @click="showAddItemModal = false">
-                                取消
-                            </n-button>
-                            <n-button type="primary" @click="saveBookmarkItem">
+                            <n-button @click="showAddItemModal = false">取消</n-button>
+                            <n-button type="primary" :loading="submitting" @click="saveBookmarkItem">
                                 保存
                             </n-button>
                         </n-space>
@@ -79,14 +90,15 @@ import {
     Folder,
     FolderOpenOutline,
     CaretForward,
-    EllipsisVertical
-    // FileTrayFullOutline
+    EllipsisVertical,
+    Add
 } from '@vicons/ionicons5'
 import BookmarkItem from '@/components/BookmarkItem.vue';
 import axios from '@/utils/httpUtil'
 import { useUserStore } from '@/store/user'
 import type { BookmarkCategoryTreeDto } from '@/models/bookmarkCategories/bookmarkCategoryModel'
 import type { GetBookmarkItemListInput, BookmarkItemDto } from '@/models/bookmarkItems/bookmarkItemModel'
+import type { FormInst } from 'naive-ui'
 
 const userStore = useUserStore()
 
@@ -250,21 +262,54 @@ const bookmarkCategoryForm = ref<{ id: string, name: string, parentId: string | 
     userId: ''
 })
 
+/**添加表单验证规则 */
+const formRules = {
+    name: {
+        required: true,
+        message: '请输入书签名称',
+        trigger: 'blur'
+    },
+    url: {
+        required: true,
+        message: '请输入书签网址',
+        trigger: 'blur'
+    }
+}
+
+const formRef = ref<FormInst | null>(null)
+const submitting = ref(false)
+
 /**
  * 保存书签
  */
-const saveBookmarkItem = async () => {
-    bookmarkItemForm.value.userId = userStore.userInfo.id
-    bookmarkItemForm.value.categoryId = contextMenuSelectedTreeNode.value?.key as string
-    const result = await axios.post<string>('/bookmark/item', bookmarkItemForm.value)
-    if (result) {
-        window.$message.success('保存成功')
-        await getBookmarkItemList(selectedTreeNode.value?.key as string)
-    }
-    else {
-        window.$message.error('可能发生了一点错误...')
-    }
-    showAddItemModal.value = false
+const saveBookmarkItem = () => {
+    formRef.value?.validate(async (errors) => {
+        if (!errors) {
+            submitting.value = true
+            try {
+                bookmarkItemForm.value.userId = userStore.userInfo.id
+                bookmarkItemForm.value.categoryId = selectedTreeNode.value?.key as string
+                
+                const result = await axios.post<string>('/bookmark/item', bookmarkItemForm.value)
+                if (result) {
+                    window.$message.success('保存成功')
+                    await getBookmarkItemList(selectedTreeNode.value?.key as string)
+                    // 重置表单
+                    bookmarkItemForm.value = {
+                        name: '',
+                        url: '',
+                        categoryId: '',
+                        userId: ''
+                    }
+                    showAddItemModal.value = false
+                } else {
+                    window.$message.error('保存失败')
+                }
+            } finally {
+                submitting.value = false
+            }
+        }
+    })
 }
 
 /**
@@ -397,3 +442,15 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     }
 }
 </script>
+
+<style scoped>
+.add-bookmark-btn {
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.bookmark-list {
+    padding: 0 16px;
+}
+</style>
